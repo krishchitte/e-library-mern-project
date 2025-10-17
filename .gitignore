@@ -1,0 +1,22 @@
+# Ignore all node_modules folders
+**/node_modules
+
+# Ignore all .env files (VERY IMPORTANT FOR SECURITY)
+**/.env
+
+# Ignore build output folder from React client
+/client/build
+
+# Ignore logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+```
+
+**Why this is important:**
+* `**/node_modules`: These folders contain thousands of files and can be easily reinstalled with `npm install`. They should never be uploaded.
+* `**/.env`: This is the most critical rule. It prevents your database connection string and secret keys (like your JWT and reCAPTCHA secrets) from being uploaded to a public repository, protecting your application from being hacked.
