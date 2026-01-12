@@ -14,10 +14,8 @@ pipeline {
 
         stage('Setup Python Environment') {
             steps {
-                // Installs Selenium for Python
-                // Note: Ensure python3 and pip are installed on your Jenkins machine
-                sh 'pip install selenium' 
-                // OR on some systems: sh 'pip3 install selenium'
+                // Windows command
+                bat 'pip install selenium' 
             }
         }
 
@@ -25,11 +23,14 @@ pipeline {
             steps {
                 script {
                     try {
-                        sh 'docker-compose down'
+                        // Windows command
+                        bat 'docker-compose down'
                     } catch (Exception e) {
                         echo 'No active containers to stop.'
                     }
-                    sh 'docker-compose up -d --build'
+                    
+                    // Windows command
+                    bat 'docker-compose up -d --build'
                 }
             }
         }
@@ -44,9 +45,8 @@ pipeline {
         stage('Automated Testing') {
             steps {
                 echo 'Running Python Selenium Tests...'
-                // Run the Python script
-                sh 'python tests/selenium_test.py'
-                // OR on some systems: sh 'python3 tests/selenium_test.py'
+                // Windows command
+                bat 'python tests/selenium_test.py'
             }
         }
     }
