@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # 1. Database Service
+  mongo:
+    image: mongo
+    container_name: elibrary-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  # 2. Backend Service
+  server:
+    build: ./server
+    container_name: elibrary-server
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/elibrary
+    depends_on:
+      - mongo
+
+  # 3. Frontend Service
+  client:
+    build: ./client
+    container_name: elibrary-client
+    ports:
+      - "3000:80"
+    depends_on:
+      - server
+
+# Persist database data so it doesn't vanish when containers restart
+volumes:
+  mongo-data:
