@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        // Keeps Node.js for other tasks if needed, though we use Docker mainly now
-        nodejs 'NodeJS' 
-    }
-
     environment {
         CI = 'true'
     }
