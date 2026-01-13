@@ -14,8 +14,8 @@ pipeline {
 
         stage('Setup Python Environment') {
             steps {
-                // FIXED: using python -m to find pip
-                bat 'python -m pip install selenium' 
+                // FIXED: Using full path with quotes to handle the space in "Krish Chitte"
+                bat '"C:\\Users\\Krish Chitte\\AppData\\Local\\Programs\\Python\\Python313\\python.exe" -m pip install selenium' 
             }
         }
 
@@ -27,6 +27,7 @@ pipeline {
                     } catch (Exception e) {
                         echo 'No active containers to stop.'
                     }
+                    
                     bat 'docker-compose up -d --build'
                 }
             }
@@ -42,7 +43,8 @@ pipeline {
         stage('Automated Testing') {
             steps {
                 echo 'Running Python Selenium Tests...'
-                bat 'python tests/selenium_test.py'
+                // FIXED: Using full path with quotes
+                bat '"C:\\Users\\Krish Chitte\\AppData\\Local\\Programs\\Python\\Python313\\python.exe" tests/selenium_test.py'
             }
         }
     }
