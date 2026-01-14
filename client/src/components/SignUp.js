@@ -22,10 +22,10 @@ function SignUp() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!captchaToken) {
+    /*if (!captchaToken) {
       alert('Please complete the CAPTCHA before submitting.');
       return;
-    }
+    }*/
 
     try {
       // Send the form data AND the captcha token to the backend
