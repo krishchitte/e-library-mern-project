@@ -13,8 +13,8 @@ BASE_URL = "http://localhost:3000"
 
 # IMPORTANT: This user MUST exist in your MongoDB database!
 # If this user does not exist, the Login test will fail.
-USER_EMAIL = "demo.123@gmail.com"
-USER_PASSWORD = "demo@123"
+USER_EMAIL = "demo123@gmail.com"
+USER_PASSWORD = "demo123"
 
 def setup_driver():
     """Initializes the Chrome driver with robust Headless settings."""
