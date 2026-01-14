@@ -16,9 +16,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                // 'SonarQube' must match the server name in Manage Jenkins -> System
                 withSonarQubeEnv('SonarQube') {
-                    // Windows batch command using ^ for line breaks
                     bat """
                         "${scannerHome}\\bin\\sonar-scanner" ^
                         -Dsonar.projectKey=elibrary-key ^
@@ -31,8 +29,8 @@ pipeline {
 
         stage('Setup Python Environment') {
             steps {
-                // Your fixed path is preserved here
-                bat '"C:\\Users\\Krish Chitte\\AppData\\Local\\Programs\\Python\\Python313\\python.exe" -m pip install selenium' 
+                // FIXED: Added 'webdriver-manager' to the install list
+                bat '"C:\\Users\\Krish Chitte\\AppData\\Local\\Programs\\Python\\Python313\\python.exe" -m pip install selenium webdriver-manager' 
             }
         }
 
@@ -59,7 +57,6 @@ pipeline {
         stage('Automated Testing') {
             steps {
                 echo 'Running Python Selenium Tests...'
-                // Your fixed path is preserved here
                 bat '"C:\\Users\\Krish Chitte\\AppData\\Local\\Programs\\Python\\Python313\\python.exe" tests/selenium_test.py'
             }
         }
