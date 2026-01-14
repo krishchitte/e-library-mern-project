@@ -16,8 +16,9 @@ FROM nginx:alpine
 # Copy the build output
 COPY --from=build /app/build /usr/share/nginx/html
 
-# --- CRITICAL FIX: Create a custom Nginx config for React Router ---
-# This ensures that routes like /login don't return 404, but fallback to index.html
+# --- CRITICAL FIX: Custom Nginx Config for React Router ---
+# This "try_files" line tells Nginx: "If file doesn't exist, load index.html"
+# This fixes the 404 error on /login and /profile
 RUN echo 'server { \
     listen 80; \
     root /usr/share/nginx/html; \
