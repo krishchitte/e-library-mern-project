@@ -3,11 +3,11 @@ pipeline {
 
     environment {
         CI = 'true'
-        // This 'SonarScanner' name must match what you added in Manage Jenkins -> Tools
         scannerHome = tool 'SonarScanner'
     }
 
     stages {
+
         stage('Checkout Code') {
             steps {
                 checkout scm
@@ -18,10 +18,11 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     bat """
-                        "${scannerHome}\\bin\\sonar-scanner" ^
-                        -Dsonar.projectKey=elibrary-key ^
-                        -Dsonar.sources=. ^
-                        -Dsonar.host.url=http://localhost:9000
+                    "${scannerHome}\\bin\\sonar-scanner" ^
+                    -Dsonar.projectKey=elibrary-key ^
+                    -Dsonar.sources=backend,frontend ^
+                    -Dsonar.exclusions=**/node_modules/**,**/build/**,**/dist/**,**/tests/** ^
+                    -Dsonar.host.url=http://localhost:9000
                     """
                 }
             }
@@ -29,28 +30,36 @@ pipeline {
 
         stage('Setup Python Environment') {
             steps {
-                // FIXED: Added 'webdriver-manager' to the install list
-                bat '"C:\\Users\\Krish Chitte\\AppData\\Local\\Programs\\Python\\Python313\\python.exe" -m pip install selenium webdriver-manager' 
+                bat '"C:\\Users\\Krish Chitte\\AppData\\Local\\Programs\\Python\\Python313\\python.exe" -m pip install selenium webdriver-manager'
             }
         }
 
         stage('Build & Deploy (Docker)') {
             steps {
                 script {
-                    try {
-                        bat 'docker-compose down'
-                    } catch (Exception e) {
-                        echo 'No active containers to stop.'
-                    }
+                    bat 'docker-compose down || exit 0'
                     bat 'docker-compose up -d --build'
                 }
             }
         }
 
-        stage('Health Check') {
+        stage('Backend Health Check') {
             steps {
-                echo 'Waiting for services to start...'
-                sleep 20
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitUntil {
+                        bat(script: 'curl http://localhost:5000/health', returnStatus: true) == 0
+                    }
+                }
+            }
+        }
+
+        stage('Frontend Ready Check') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitUntil {
+                        bat(script: 'curl http://localhost:3000', returnStatus: true) == 0
+                    }
+                }
             }
         }
 
@@ -64,10 +73,10 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo '✅ Pipeline completed successfully!'
         }
         failure {
-            echo 'Pipeline failed. Check logs.'
+            echo '❌ Pipeline failed. Check logs.'
         }
     }
 }
