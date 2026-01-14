@@ -10,8 +10,8 @@ from selenium.webdriver.chrome.options import Options
 
 # --- CONFIGURATION ---
 BASE_URL = "http://localhost:3000"
-USER_EMAIL = "demo.123@gmail.com"
-USER_PASSWORD = "demo@123"
+USER_EMAIL = "demo123@gmail.com"
+USER_PASSWORD = "demo123"
 
 def setup_driver():
     """Initializes Chrome with settings compatible with Windows Services."""
