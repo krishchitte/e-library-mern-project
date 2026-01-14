@@ -23,7 +23,7 @@ def setup_driver():
     options.add_argument("--window-size=1920,1080")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
     
-    # Store session data so login persists across the window.location reload
+    # Store session data
     options.add_argument("--user-data-dir=/tmp/selenium_user_data") 
 
     service = Service(ChromeDriverManager().install())
@@ -44,6 +44,7 @@ def run_tests(driver):
     driver.find_element(By.NAME, "password").send_keys(USER_PASSWORD)
     
     # Click 'Log In'
+    # Using JavaScript click is safer for headless execution
     login_btn = driver.find_element(By.XPATH, "//button[contains(text(), 'Log In')]")
     driver.execute_script("arguments[0].click();", login_btn)
     
@@ -56,26 +57,31 @@ def run_tests(driver):
     except:
         print("[INFO] No login alert appeared.")
 
-    # --- CRITICAL FIX FOR window.location RELOAD ---
+    # --- CRITICAL WAIT FOR RELOAD ---
     print("[INFO] Waiting for page reload...")
-    time.sleep(8) # Give extra time for the hard reload to finish
+    time.sleep(8) 
     
-    # Verify we are on Profile page
+    # Verify we are logged in
     print(f"[INFO] URL after login: {driver.current_url}")
-    if "/profile" not in driver.current_url:
-        print(f"[WARN] Expected /profile, got {driver.current_url}. Navigating to Home manually...")
-        driver.get(f"{BASE_URL}/") # Force go to home if stuck
+    # If still on /login, try forcing a navigation to Home since the token should be in localStorage now
+    if "/login" in driver.current_url:
+        print("[WARN] Still on login page. Navigating to Home manually...")
+        driver.get(f"{BASE_URL}/") 
 
     # --- STEP 2: ADD TO CART ---
     print("[TEST] 2. Adding to Cart...")
-    driver.get(f"{BASE_URL}/") # Ensure we are on Home
+    driver.get(f"{BASE_URL}/")
     
     try:
         # Wait for books
         wait.until(EC.presence_of_element_located((By.CLASS_NAME, "book-card")))
         
-        # Click Add to Cart
+        # Find button and SCROLL TO IT (Fixes layout issues)
         add_btn = driver.find_element(By.XPATH, "(//button[contains(text(), 'Add to Cart')])[1]")
+        driver.execute_script("arguments[0].scrollIntoView(true);", add_btn)
+        time.sleep(1) # Wait for scroll
+        
+        # Click
         driver.execute_script("arguments[0].click();", add_btn)
         
         # Handle Cart Alert
@@ -90,14 +96,14 @@ def run_tests(driver):
 
     except Exception as e:
         print(f"[WARN] Add to Cart failed: {e}")
-        # Don't exit, try checkout anyway
 
     # --- STEP 3: CHECKOUT ---
     print("[TEST] 3. Checking Out...")
     driver.get(f"{BASE_URL}/cart")
     try:
         checkout_btn = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "checkout-btn")))
-        checkout_btn.click()
+        driver.execute_script("arguments[0].scrollIntoView(true);", checkout_btn)
+        driver.execute_script("arguments[0].click();", checkout_btn)
         print("[PASS] Checkout button clicked.")
     except:
         print("[WARN] Checkout button not found (Cart might be empty).")
