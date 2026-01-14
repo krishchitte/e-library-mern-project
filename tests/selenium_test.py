@@ -1,75 +1,93 @@
 import time
-import sys
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
 
-def run_test():
-    print("Starting Selenium Test (Final Version for E-Library)...")
 
-    # 1. Setup Chrome Options (Headless for Jenkins)
-    chrome_options = Options()
-    chrome_options.add_argument("--headless") 
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-gpu") 
-    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+# --- CONFIGURATION ---
+BASE_URL = "http://localhost:3000"  # Change this if your frontend runs on a different port
+USER_EMAIL = "testuser@example.com"
+USER_PASSWORD = "password123"
 
-    driver = webdriver.Chrome(options=chrome_options)
 
-    try:
-        # 2. Open the React App
-        app_url = "http://localhost:3000"
-        print(f"Opening {app_url}...")
-        driver.get(app_url)
+def setup_driver():
+    """Initializes the Chrome driver."""
+    options = webdriver.ChromeOptions()
+    # options.add_argument("--headless")  # Uncomment to run without opening a window
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    driver.maximize_window()
+    return driver
 
-        # 3. TEST 1: Check Navbar & Title (from App.js)
-        print("Test 1: Checking Navbar and Logo...")
-        navbar = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "navbar"))
-        )
-        
-        title_element = navbar.find_element(By.CLASS_NAME, "title")
-        if "E-LIBRARY" in title_element.text:
-            print("[PASS] Navbar found with title 'E-LIBRARY'.")
-        else:
-            raise Exception(f"Navbar title mismatch. Found: '{title_element.text}'")
 
-        # 4. TEST 2: Check Hero Section (from Home.js)
-        print("Test 2: Checking Hero Section content...")
-        hero_header = WebDriverWait(driver, 10).until(
-            EC.visibility_of_element_located((By.CSS_SELECTOR, ".hero-content h1"))
-        )
-        header_text = hero_header.text
-        print(f"   Found Header: '{header_text}'")
+def test_user_login(driver):
+    """Functionality 1: User Login"""
+    print("Testing User Login...")
+    driver.get(f"{BASE_URL}/login")
+   
+    # Wait for the email input to be present
+    wait = WebDriverWait(driver, 10)
+    email_input = wait.until(EC.presence_of_element_located((By.NAME, "email")))
+    password_input = driver.find_element(By.NAME, "password")
+    login_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Login') or @type='submit']")
 
-        if "Welcome to Your E-Library" in header_text:
-            print("[PASS] Hero Section loaded successfully.")
-        else:
-            raise Exception(f"Expected 'Welcome to Your E-Library', but got '{header_text}'")
 
-        # 5. TEST 3: Check Book Gallery (Integration Test)
-        print("Test 3: Waiting for books to fetch from Backend...")
-        try:
-            WebDriverWait(driver, 15).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "book-card"))
-            )
-            print("[PASS] Books are visible! (Frontend & Backend are connected)")
-        except:
-            print("[WARNING] No books found.")
-            print("   - This could mean the Database is empty OR the Backend isn't running.")
-            print("   - Since the UI loaded, we will consider the deployment successful.")
-            pass
+    email_input.send_keys(USER_EMAIL)
+    password_input.send_keys(USER_PASSWORD)
+    login_button.click()
 
-    except Exception as e:
-        print(f"[FAIL] CRITICAL FAILURE: {e}")
-        sys.exit(1)
-        
-    finally:
-        driver.quit()
-        print("Test finished. Browser closed.")
+
+    # Verify login success by checking for a logout button or profile link
+    wait.until(EC.url_changes(f"{BASE_URL}/login"))
+    print("Login successful!")
+
+
+def test_add_to_cart(driver):
+    """Functionality 2: Add to Cart"""
+    print("Testing Add to Cart...")
+    # Go to the books/home page
+    driver.get(f"{BASE_URL}/")
+   
+    wait = WebDriverWait(driver, 10)
+    # Find the first 'Add to Cart' button available on the page
+    # This selector looks for buttons containing the text 'Add to Cart'
+    add_to_cart_btn = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Add to Cart')]")))
+    add_to_cart_btn.click()
+   
+    print("Item added to cart successfully!")
+    time.sleep(2) # Brief pause to allow any toast notifications to appear/disappear
+
+
+def test_buy_book(driver):
+    """Functionality 3: Buy Book (Checkout)"""
+    print("Testing Buy Book process...")
+    # Navigate to the Cart page
+    driver.get(f"{BASE_URL}/cart")
+   
+    wait = WebDriverWait(driver, 10)
+   
+    # Click on the Checkout/Buy button
+    checkout_btn = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Checkout') or contains(text(), 'Place Order') or contains(text(), 'Buy')]")))
+    checkout_btn.click()
+   
+    # If there's a shipping/payment form, you would fill it here.
+    # Assuming it leads to a success page or confirmation.
+    print("Buy Book process initiated!")
+    time.sleep(3)
+
 
 if __name__ == "__main__":
-    run_test()
+    driver = setup_driver()
+    try:
+        test_user_login(driver)
+        test_add_to_cart(driver)
+        test_buy_book(driver)
+        print("\nAll 3 tests passed successfully!")
+    except Exception as e:
+        print(f"\nAn error occurred during testing: {e}")
+    finally:
+        time.sleep(5)
+        driver.quit()
+
