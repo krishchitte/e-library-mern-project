@@ -88,17 +88,27 @@ def checkout_from_cart(driver, wait):
             )
         )
 
-        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", checkout_btn)
+        driver.execute_script(
+            "arguments[0].scrollIntoView({block:'center'});", checkout_btn
+        )
         time.sleep(1)
         driver.execute_script("arguments[0].click();", checkout_btn)
 
+        # 🔑 WAIT FOR CART OVERLAY TO DISAPPEAR
+        wait.until(
+            EC.invisibility_of_element_located(
+                (By.CLASS_NAME, "cart-overlay")
+            )
+        )
+
+        # 🔑 THEN wait for checkout page
         wait.until(EC.url_contains("/checkout"))
+
         print("[PASS] Navigated to checkout page")
 
     except Exception as e:
         driver.save_screenshot("tests/screenshots/checkout_failed.png")
         raise Exception("Checkout failed") from e
-
 
 def checkout_and_buy(driver, wait):
     print("[TEST] Checkout and purchase")
