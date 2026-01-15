@@ -55,18 +55,24 @@ def add_to_cart(driver, wait):
     print("[TEST] Adding book to cart")
 
     driver.get(BASE_URL)
-
-    # wait for page + books to load
-    time.sleep(3)
+    time.sleep(3)  # allow React + API to load
 
     try:
-        add_btn = wait.until(
-            EC.element_to_be_clickable(
-                (By.XPATH, "//button[.//text()[contains(normalize-space(),'Cart')]]")
+        # Get the first book card
+        book_card = wait.until(
+            EC.presence_of_element_located(
+                (By.XPATH, "(//div[contains(@class,'card')])[1]")
             )
         )
 
-        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", add_btn)
+        # Find "Add to Cart" button inside that card (BLACK button)
+        add_btn = book_card.find_element(
+            By.XPATH, ".//button[contains(text(),'Add to Cart')]"
+        )
+
+        driver.execute_script(
+            "arguments[0].scrollIntoView({block:'center'});", add_btn
+        )
         time.sleep(1)
         driver.execute_script("arguments[0].click();", add_btn)
 
@@ -79,7 +85,6 @@ def add_to_cart(driver, wait):
     except Exception as e:
         driver.save_screenshot("tests/screenshots/add_to_cart_failed.png")
         raise Exception("Add to Cart failed – screenshot saved") from e
-
 
 def checkout_and_buy(driver, wait):
     print("[TEST] Checkout and purchase")
