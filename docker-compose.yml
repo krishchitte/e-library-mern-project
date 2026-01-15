@@ -4,19 +4,16 @@ services:
   # 1. Database Service
   mongo:
     image: mongo
-    container_name: elibrary-mongo
     ports:
       - "27017:27017"
     volumes:
-      # THIS LINE SAVES DATA TO YOUR HARD DRIVE
-      - mongo-data:/data/db 
+      - mongo-data:/data/db
     networks:
       - elibrary-network
 
   # 2. Backend Service
   server:
     build: ./server
-    container_name: elibrary-server
     ports:
       - "5000:5000"
     environment:
@@ -29,7 +26,6 @@ services:
   # 3. Frontend Service
   client:
     build: ./client
-    container_name: elibrary-client
     ports:
       - "3000:80"
     depends_on:
