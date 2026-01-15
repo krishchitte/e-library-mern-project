@@ -31,13 +31,15 @@ def login(driver, wait):
     wait.until(EC.presence_of_element_located((By.NAME, "email"))).send_keys(EMAIL)
     driver.find_element(By.NAME, "password").send_keys(PASSWORD)
 
-    login_btn = driver.find_element(By.XPATH, "//button[contains(text(),'Login')]")
+    login_btn = wait.until(
+        EC.element_to_be_clickable(
+            (By.XPATH, "//button[@type='submit']")
+        )
+    )
     driver.execute_script("arguments[0].click();", login_btn)
 
-    # handle alert
     alert = wait.until(EC.alert_is_present())
-    alert_text = alert.text
-    print("[INFO] Login alert text:", alert_text)
+    print("[INFO] Login alert text:", alert.text)
     alert.accept()
 
     time.sleep(2)
