@@ -133,15 +133,43 @@ def checkout_and_buy(driver, wait):
 
     print("[PASS] Purchase completed successfully")
 
+def confirm_purchase(driver, wait):
+    print("[TEST] Confirming purchase")
+
+    try:
+        confirm_btn = wait.until(
+            EC.element_to_be_clickable(
+                (By.CLASS_NAME, "payment-button")
+            )
+        )
+
+        driver.execute_script(
+            "arguments[0].scrollIntoView({block:'center'});", confirm_btn
+        )
+        time.sleep(1)
+        driver.execute_script("arguments[0].click();", confirm_btn)
+
+        alert = wait.until(EC.alert_is_present())
+        print("[INFO] Purchase alert:", alert.text)
+        alert.accept()
+
+        wait.until(EC.url_contains("/profile"))
+        print("[PASS] Purchase completed successfully")
+
+    except Exception as e:
+        driver.save_screenshot("tests/screenshots/confirm_purchase_failed.png")
+        raise Exception("Confirm purchase failed") from e
+
 
 if __name__ == "__main__":
     driver = setup_driver()
-    wait = WebDriverWait(driver, 20)
+    wait = WebDriverWait(driver, 25)
 
     try:
         login(driver, wait)
         add_to_cart(driver, wait)
         checkout_from_cart(driver, wait)
+        confirm_purchase(driver, wait)
 
         print("\n[SUCCESS] All Selenium tests passed")
         sys.exit(0)
