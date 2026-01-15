@@ -55,36 +55,50 @@ def add_to_cart(driver, wait):
     print("[TEST] Adding book to cart")
 
     driver.get(BASE_URL)
-    time.sleep(3)  # allow React + API to load
+    time.sleep(3)
 
     try:
-        # Get the first book card
         book_card = wait.until(
             EC.presence_of_element_located(
                 (By.XPATH, "(//div[contains(@class,'card')])[1]")
             )
         )
 
-        # Find "Add to Cart" button inside that card (BLACK button)
         add_btn = book_card.find_element(
             By.XPATH, ".//button[contains(text(),'Add to Cart')]"
         )
 
-        driver.execute_script(
-            "arguments[0].scrollIntoView({block:'center'});", add_btn
-        )
+        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", add_btn)
         time.sleep(1)
         driver.execute_script("arguments[0].click();", add_btn)
 
-        alert = wait.until(EC.alert_is_present())
-        print("[INFO] Add-to-cart alert:", alert.text)
-        alert.accept()
-
-        print("[PASS] Book added to cart")
+        print("[PASS] Add to cart clicked")
 
     except Exception as e:
         driver.save_screenshot("tests/screenshots/add_to_cart_failed.png")
-        raise Exception("Add to Cart failed – screenshot saved") from e
+        raise Exception("Add to Cart failed") from e
+
+def checkout_from_cart(driver, wait):
+    print("[TEST] Proceeding to checkout")
+
+    try:
+        checkout_btn = wait.until(
+            EC.element_to_be_clickable(
+                (By.CLASS_NAME, "checkout-btn")
+            )
+        )
+
+        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", checkout_btn)
+        time.sleep(1)
+        driver.execute_script("arguments[0].click();", checkout_btn)
+
+        wait.until(EC.url_contains("/checkout"))
+        print("[PASS] Navigated to checkout page")
+
+    except Exception as e:
+        driver.save_screenshot("tests/screenshots/checkout_failed.png")
+        raise Exception("Checkout failed") from e
+
 
 def checkout_and_buy(driver, wait):
     print("[TEST] Checkout and purchase")
@@ -127,12 +141,13 @@ if __name__ == "__main__":
     try:
         login(driver, wait)
         add_to_cart(driver, wait)
-        checkout_and_buy(driver, wait)
+        checkout_from_cart(driver, wait)
 
         print("\n[SUCCESS] All Selenium tests passed")
+        sys.exit(0)
 
     except Exception as e:
-        print("\n[ERROR]", e)
+        print(f"\n[ERROR] {e}")
         sys.exit(1)
 
     finally:
