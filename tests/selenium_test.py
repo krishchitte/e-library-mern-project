@@ -56,23 +56,29 @@ def add_to_cart(driver, wait):
 
     driver.get(BASE_URL)
 
-    # wait for books to load
-    wait.until(EC.presence_of_element_located((By.CLASS_NAME, "books")))
+    # wait for page + books to load
+    time.sleep(3)
 
-    add_btn = wait.until(
-        EC.element_to_be_clickable(
-            (By.XPATH, "//button[contains(text(),'Add to Cart')]")
+    try:
+        add_btn = wait.until(
+            EC.element_to_be_clickable(
+                (By.XPATH, "//button[.//text()[contains(normalize-space(),'Cart')]]")
+            )
         )
-    )
 
-    driver.execute_script("arguments[0].scrollIntoView(true);", add_btn)
-    driver.execute_script("arguments[0].click();", add_btn)
+        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", add_btn)
+        time.sleep(1)
+        driver.execute_script("arguments[0].click();", add_btn)
 
-    alert = wait.until(EC.alert_is_present())
-    print("[INFO] Add-to-cart alert:", alert.text)
-    alert.accept()
+        alert = wait.until(EC.alert_is_present())
+        print("[INFO] Add-to-cart alert:", alert.text)
+        alert.accept()
 
-    print("[PASS] Book added to cart")
+        print("[PASS] Book added to cart")
+
+    except Exception as e:
+        driver.save_screenshot("tests/screenshots/add_to_cart_failed.png")
+        raise Exception("Add to Cart failed – screenshot saved") from e
 
 
 def checkout_and_buy(driver, wait):
