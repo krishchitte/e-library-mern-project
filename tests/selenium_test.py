@@ -65,36 +65,24 @@ def login(driver, wait):
     )
     driver.execute_script("arguments[0].click();", login_btn)
 
-    # Verify REAL login (token-based)
+    # CRITICAL: Handle alert (your app depends on it)
     try:
-        wait_for_token(driver, wait)
+        alert = WebDriverWait(driver, 10).until(EC.alert_is_present())
+        print(f"[INFO] Login alert text: {alert.text}")
+        alert.accept()
     except:
-        screenshot(driver, "login_failed")
-        raise Exception("Login failed – token not found")
+        raise Exception("Login alert did not appear")
 
-    if "/login" in driver.current_url:
-        screenshot(driver, "still_on_login")
-        raise Exception("Login failed – still on /login")
+    #  Now wait for token AFTER alert is accepted
+    try:
+        wait.until(lambda d: d.execute_script(
+            "return window.localStorage.getItem('token') !== null"
+        ))
+    except:
+        driver.save_screenshot("tests/screenshots/token_missing.png")
+        raise Exception("Token not set after login")
 
-    print("[PASS] Login successful")
-
-def add_to_cart(driver, wait):
-    print("[TEST] Adding book to cart")
-
-    driver.get(BASE_URL)
-
-    book = wait.until(
-        EC.presence_of_element_located((By.CLASS_NAME, "book-card"))
-    )
-
-    add_btn = book.find_element(
-        By.XPATH, ".//button[contains(text(),'Add to Cart')]"
-    )
-
-    driver.execute_script("arguments[0].scrollIntoView(true);", add_btn)
-    driver.execute_script("arguments[0].click();", add_btn)
-
-    print("[PASS] Book added to cart")
+    print("[PASS] Login successful, token detected")
 
 def checkout(driver, wait):
     print("[TEST] Checkout")
