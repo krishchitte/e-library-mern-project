@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 5000
 
 # Command to start the server
-CMD ["npm", "start"]
+CMD ["sh", "-c", "node seeder.js && npm start"]

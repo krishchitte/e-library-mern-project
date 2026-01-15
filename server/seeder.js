@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const bcrypt = require('bcryptjs');
 const books = require('./data/books.js');
 const Book = require('./models/Book.js');
-const User = require('./models/User.js'); // Import other models if you need to seed them
+const User = require('./models/User.js');
 
 dotenv.config();
 
@@ -16,12 +17,33 @@ const connectDB = async () => {
   }
 };
 
+const seedDemoUser = async () => {
+  const email = 'demo123@gmail.com';
+
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    console.log('Demo user already exists');
+    return;
+  }
+
+  const hashedPassword = await bcrypt.hash('demo123', 10);
+
+  await User.create({
+    name: 'Demo User',
+    email,
+    password: hashedPassword,
+  });
+
+  console.log('Demo user created');
+};
+
 const importData = async () => {
   try {
-    // Clear existing data before importing
     await Book.deleteMany();
-    
     await Book.insertMany(books);
+
+    // 🔥 ADD THIS LINE
+    await seedDemoUser();
 
     console.log('Data Imported Successfully!');
     process.exit();
@@ -34,8 +56,7 @@ const importData = async () => {
 const destroyData = async () => {
   try {
     await Book.deleteMany();
-    await User.deleteMany(); // Example: clear users too
-    // await Cart.deleteMany();
+    await User.deleteMany();
 
     console.log('Data Destroyed Successfully!');
     process.exit();
@@ -46,13 +67,13 @@ const destroyData = async () => {
 };
 
 const runSeeder = async () => {
-    await connectDB();
+  await connectDB();
 
-    if (process.argv[2] === '-d') {
-        await destroyData();
-    } else {
-        await importData();
-    }
-}
+  if (process.argv[2] === '-d') {
+    await destroyData();
+  } else {
+    await importData();
+  }
+};
 
 runSeeder();
