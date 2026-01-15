@@ -37,15 +37,6 @@ services:
     networks:
       - elibrary-network
 
-  # 4. Custom Ubuntu Nagios Service
-  nagios:
-    build: ./nagios_ubuntu
-    container_name: elibrary-nagios-ubuntu
-    ports:
-      - "9090:80"
-    networks:
-      - elibrary-network
-
 volumes:
   mongo-data:
 
