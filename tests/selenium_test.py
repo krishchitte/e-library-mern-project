@@ -83,9 +83,7 @@ def checkout_from_cart(driver, wait):
 
     try:
         checkout_btn = wait.until(
-            EC.element_to_be_clickable(
-                (By.CLASS_NAME, "checkout-btn")
-            )
+            EC.element_to_be_clickable((By.CLASS_NAME, "checkout-btn"))
         )
 
         driver.execute_script(
@@ -94,21 +92,20 @@ def checkout_from_cart(driver, wait):
         time.sleep(1)
         driver.execute_script("arguments[0].click();", checkout_btn)
 
-        # 🔑 WAIT FOR CART OVERLAY TO DISAPPEAR
+        # 🔑 DO NOT TRUST URL ALONE
+        # Wait for CheckoutPage heading
         wait.until(
-            EC.invisibility_of_element_located(
-                (By.CLASS_NAME, "cart-overlay")
+            EC.presence_of_element_located(
+                (By.XPATH, "//h2[contains(text(),'Confirm Your Order')]")
             )
         )
 
-        # 🔑 THEN wait for checkout page
-        wait.until(EC.url_contains("/checkout"))
-
-        print("[PASS] Navigated to checkout page")
+        print("[PASS] Checkout page loaded")
 
     except Exception as e:
         driver.save_screenshot("tests/screenshots/checkout_failed.png")
         raise Exception("Checkout failed") from e
+
 
 def checkout_and_buy(driver, wait):
     print("[TEST] Checkout and purchase")
