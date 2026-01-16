@@ -45,16 +45,15 @@ app.use('/api/cart', require('./routes/cart'));
 // =====================
 // MongoDB Connection
 // =====================
-(async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI);
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
     console.log('MongoDB Connected');
-
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  } catch (err) {
+    app.listen(PORT, () =>
+      console.log(`Server running on port ${PORT}`)
+    );
+  })
+  .catch((err) => {
     console.error('Mongo connection error:', err.message);
     process.exit(1);
-  }
-})();
+  });
