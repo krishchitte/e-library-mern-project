@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const { connectDB, importData } = require('./seeder');
 require('dotenv').config();
 
 const app = express();
@@ -11,8 +12,16 @@ app.use(express.json()); // Allows us to accept JSON data in the body
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB Connected...'))
-  .catch(err => console.log(err));
+  .then(async () => {
+    console.log('MongoDB Connected to elibrary');
+
+    await seedUser();
+    await seedBooks();
+
+    app.listen(PORT, () =>
+      console.log(`Server running on port ${PORT}`)
+    );
+  })
 
 // Define Routes
 app.use('/api/auth', require('./routes/auth.js'));
@@ -23,3 +32,14 @@ app.use('/api/cart', require('./routes/cart.js'));
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+
+const startServer = async () => {
+  await connectDB();
+  await importData(); // ✅ always seed on startup
+
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+};
+
+startServer();
