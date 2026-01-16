@@ -32,22 +32,16 @@ def login(driver, wait):
     driver.find_element(By.NAME, "password").send_keys(PASSWORD)
 
     login_btn = wait.until(
-        EC.element_to_be_clickable(
-            (By.XPATH, "//button[@type='submit']")
-        )
+        EC.element_to_be_clickable((By.XPATH, "//button[@type='submit']"))
     )
     driver.execute_script("arguments[0].click();", login_btn)
 
     alert = wait.until(EC.alert_is_present())
-    print("[INFO] Login alert text:", alert.text)
+    print("[INFO] Login alert:", alert.text)
     alert.accept()
 
-    time.sleep(2)
-
-    token = driver.execute_script("return localStorage.getItem('token');")
-    if not token:
-        raise Exception("Token not set after login")
-
+    # Verify token
+    wait.until(lambda d: d.execute_script("return localStorage.getItem('token');"))
     print("[PASS] Login successful, token detected")
 
 
@@ -55,62 +49,28 @@ def add_to_cart(driver, wait):
     print("[TEST] Adding book to cart")
 
     driver.get(BASE_URL)
-    time.sleep(3)
 
-    try:
-        book_card = wait.until(
-            EC.presence_of_element_located(
-                (By.XPATH, "(//div[contains(@class,'card')])[1]")
-            )
+    book_card = wait.until(
+        EC.presence_of_element_located(
+            (By.XPATH, "(//div[contains(@class,'card')])[1]")
         )
+    )
 
-        add_btn = book_card.find_element(
-            By.XPATH, ".//button[contains(text(),'Add to Cart')]"
-        )
+    add_btn = book_card.find_element(
+        By.XPATH, ".//button[contains(text(),'Add to Cart')]"
+    )
 
-        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", add_btn)
-        time.sleep(1)
-        driver.execute_script("arguments[0].click();", add_btn)
+    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", add_btn)
+    time.sleep(1)
+    driver.execute_script("arguments[0].click();", add_btn)
 
-        print("[PASS] Add to cart clicked")
-
-    except Exception as e:
-        driver.save_screenshot("tests/screenshots/add_to_cart_failed.png")
-        raise Exception("Add to Cart failed") from e
-
-def checkout_from_cart(driver, wait):
-    print("[TEST] Proceeding to checkout")
-
-    try:
-        checkout_btn = wait.until(
-            EC.element_to_be_clickable((By.CLASS_NAME, "checkout-btn"))
-        )
-
-        driver.execute_script(
-            "arguments[0].scrollIntoView({block:'center'});", checkout_btn
-        )
-        time.sleep(1)
-        driver.execute_script("arguments[0].click();", checkout_btn)
-
-        # 🔑 DO NOT TRUST URL ALONE
-        # Wait for CheckoutPage heading
-        wait.until(
-            EC.presence_of_element_located(
-                (By.XPATH, "//h2[contains(text(),'Confirm Your Order')]")
-            )
-        )
-
-        print("[PASS] Checkout page loaded")
-
-    except Exception as e:
-        driver.save_screenshot("tests/screenshots/checkout_failed.png")
-        raise Exception("Checkout failed") from e
+    print("[PASS] Book added to cart")
 
 
-def checkout_and_buy(driver, wait):
-    print("[TEST] Checkout and purchase")
+def checkout_and_confirm(driver, wait):
+    print("[TEST] Checkout flow")
 
-    # Open cart by clicking cart icon/button
+    # 1️⃣ Open cart (cart icon / button)
     cart_btn = wait.until(
         EC.element_to_be_clickable(
             (By.XPATH, "//button[contains(@class,'cart')]")
@@ -118,70 +78,49 @@ def checkout_and_buy(driver, wait):
     )
     driver.execute_script("arguments[0].click();", cart_btn)
 
-    # Proceed to checkout
+    # 2️⃣ Click Proceed to Checkout
     checkout_btn = wait.until(
-        EC.element_to_be_clickable(
-            (By.CLASS_NAME, "checkout-btn")
-        )
+        EC.element_to_be_clickable((By.CLASS_NAME, "checkout-btn"))
     )
     driver.execute_script("arguments[0].click();", checkout_btn)
 
-    # Confirm purchase
-    confirm_btn = wait.until(
-        EC.element_to_be_clickable(
-            (By.XPATH, "//button[contains(text(),'Confirm Purchase')]")
+    # 3️⃣ Wait for Checkout page
+    wait.until(
+        EC.presence_of_element_located(
+            (By.XPATH, "//h2[contains(text(),'Confirm Your Order')]")
         )
+    )
+    print("[PASS] Checkout page loaded")
+
+    # 4️⃣ Confirm purchase
+    confirm_btn = wait.until(
+        EC.element_to_be_clickable((By.CLASS_NAME, "payment-button"))
     )
     driver.execute_script("arguments[0].click();", confirm_btn)
 
     alert = wait.until(EC.alert_is_present())
-    print("[INFO] Checkout alert:", alert.text)
+    print("[INFO] Purchase alert:", alert.text)
     alert.accept()
 
+    # 5️⃣ Verify redirect
+    wait.until(EC.url_contains("/profile"))
     print("[PASS] Purchase completed successfully")
-
-def confirm_purchase(driver, wait):
-    print("[TEST] Confirming purchase")
-
-    try:
-        confirm_btn = wait.until(
-            EC.element_to_be_clickable(
-                (By.CLASS_NAME, "payment-button")
-            )
-        )
-
-        driver.execute_script(
-            "arguments[0].scrollIntoView({block:'center'});", confirm_btn
-        )
-        time.sleep(1)
-        driver.execute_script("arguments[0].click();", confirm_btn)
-
-        alert = wait.until(EC.alert_is_present())
-        print("[INFO] Purchase alert:", alert.text)
-        alert.accept()
-
-        wait.until(EC.url_contains("/profile"))
-        print("[PASS] Purchase completed successfully")
-
-    except Exception as e:
-        driver.save_screenshot("tests/screenshots/confirm_purchase_failed.png")
-        raise Exception("Confirm purchase failed") from e
 
 
 if __name__ == "__main__":
     driver = setup_driver()
-    wait = WebDriverWait(driver, 25)
+    wait = WebDriverWait(driver, 30)
 
     try:
         login(driver, wait)
         add_to_cart(driver, wait)
-        checkout_from_cart(driver, wait)
-        confirm_purchase(driver, wait)
+        checkout_and_confirm(driver, wait)
 
         print("\n[SUCCESS] All Selenium tests passed")
         sys.exit(0)
 
     except Exception as e:
+        driver.save_screenshot("tests/screenshots/test_failed.png")
         print(f"\n[ERROR] {e}")
         sys.exit(1)
 
