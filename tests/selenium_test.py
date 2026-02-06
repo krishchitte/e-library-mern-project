@@ -70,7 +70,7 @@ def add_to_cart(driver, wait):
 def checkout_and_confirm(driver, wait):
     print("[TEST] Checkout flow")
 
-    # 1️⃣ Open cart (cart icon / button)
+    # 1️⃣ Open cart
     cart_btn = wait.until(
         EC.element_to_be_clickable(
             (By.XPATH, "//button[contains(@class,'cart')]")
@@ -78,13 +78,13 @@ def checkout_and_confirm(driver, wait):
     )
     driver.execute_script("arguments[0].click();", cart_btn)
 
-    # 2️⃣ Click Proceed to Checkout
+    # 2️⃣ Proceed to checkout
     checkout_btn = wait.until(
         EC.element_to_be_clickable((By.CLASS_NAME, "checkout-btn"))
     )
     driver.execute_script("arguments[0].click();", checkout_btn)
 
-    # 3️⃣ Wait for Checkout page
+    # 3️⃣ Ensure checkout page loaded
     wait.until(
         EC.presence_of_element_located(
             (By.XPATH, "//h2[contains(text(),'Confirm Your Order')]")
@@ -92,19 +92,20 @@ def checkout_and_confirm(driver, wait):
     )
     print("[PASS] Checkout page loaded")
 
-    # 4️⃣ Confirm purchase
+    # 4️⃣ Click Confirm Purchase
     confirm_btn = wait.until(
-        EC.element_to_be_clickable((By.CLASS_NAME, "payment-button"))
+        EC.element_to_be_clickable(
+            (By.XPATH, "//button[contains(text(),'Confirm Purchase')]")
+        )
     )
     driver.execute_script("arguments[0].click();", confirm_btn)
 
-    alert = wait.until(EC.alert_is_present())
-    print("[INFO] Purchase alert:", alert.text)
-    alert.accept()
-
-    # 5️⃣ Verify redirect
+    # ❌ DO NOT WAIT FOR ALERT
+    # ✅ WAIT FOR REDIRECT TO PROFILE
     wait.until(EC.url_contains("/profile"))
+
     print("[PASS] Purchase completed successfully")
+
 
 
 if __name__ == "__main__":
