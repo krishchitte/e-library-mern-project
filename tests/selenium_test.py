@@ -1,28 +1,17 @@
 import time
 import sys
-
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
-
-
-# ============================
-# CONFIGURATION
-# ============================
+from selenium.webdriver.chrome.options import Options
 
 BASE_URL = "http://localhost:3000"
 EMAIL = "demo123@gmail.com"
 PASSWORD = "demo123"
-TIMEOUT = 30
 
-
-# ============================
-# DRIVER SETUP
-# ============================
 
 def setup_driver():
     options = Options()
@@ -32,31 +21,18 @@ def setup_driver():
     options.add_argument("--window-size=1920,1080")
 
     service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)
+    return webdriver.Chrome(service=service, options=options)
 
-    return driver
-
-
-# ============================
-# LOGIN TEST
-# ============================
 
 def login(driver, wait):
-    print(f"[TEST] Logging in as {EMAIL}")
-
+    print("[TEST] Logging in as", EMAIL)
     driver.get(f"{BASE_URL}/login")
 
-    wait.until(
-        EC.presence_of_element_located((By.NAME, "email"))
-    ).send_keys(EMAIL)
-
-    driver.find_element(By.NAME, "password") \
-        .send_keys(PASSWORD)
+    wait.until(EC.presence_of_element_located((By.NAME, "email"))).send_keys(EMAIL)
+    driver.find_element(By.NAME, "password").send_keys(PASSWORD)
 
     login_btn = wait.until(
-        EC.element_to_be_clickable(
-            (By.XPATH, "//button[@type='submit']")
-        )
+        EC.element_to_be_clickable((By.XPATH, "//button[@type='submit']"))
     )
     driver.execute_script("arguments[0].click();", login_btn)
 
@@ -65,18 +41,9 @@ def login(driver, wait):
     alert.accept()
 
     # Verify token
-    wait.until(
-        lambda d: d.execute_script(
-            "return localStorage.getItem('token');"
-        )
-    )
-
+    wait.until(lambda d: d.execute_script("return localStorage.getItem('token');"))
     print("[PASS] Login successful, token detected")
 
-
-# ============================
-# ADD TO CART TEST
-# ============================
 
 def add_to_cart(driver, wait):
     print("[TEST] Adding book to cart")
@@ -90,29 +57,20 @@ def add_to_cart(driver, wait):
     )
 
     add_btn = book_card.find_element(
-        By.XPATH,
-        ".//button[contains(text(),'Add to Cart')]"
+        By.XPATH, ".//button[contains(text(),'Add to Cart')]"
     )
 
-    driver.execute_script(
-        "arguments[0].scrollIntoView({block:'center'});",
-        add_btn
-    )
+    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", add_btn)
     time.sleep(1)
-
     driver.execute_script("arguments[0].click();", add_btn)
 
     print("[PASS] Book added to cart")
 
 
-# ============================
-# CHECKOUT TEST
-# ============================
-
 def checkout_and_confirm(driver, wait):
     print("[TEST] Checkout flow")
 
-    # Open cart
+    # 1️⃣ Open cart (cart icon / button)
     cart_btn = wait.until(
         EC.element_to_be_clickable(
             (By.XPATH, "//button[contains(@class,'cart')]")
@@ -120,13 +78,13 @@ def checkout_and_confirm(driver, wait):
     )
     driver.execute_script("arguments[0].click();", cart_btn)
 
-    # Proceed to checkout
+    # 2️⃣ Click Proceed to Checkout
     checkout_btn = wait.until(
         EC.element_to_be_clickable((By.CLASS_NAME, "checkout-btn"))
     )
     driver.execute_script("arguments[0].click();", checkout_btn)
 
-    # Verify checkout page
+    # 3️⃣ Wait for Checkout page
     wait.until(
         EC.presence_of_element_located(
             (By.XPATH, "//h2[contains(text(),'Confirm Your Order')]")
@@ -134,7 +92,7 @@ def checkout_and_confirm(driver, wait):
     )
     print("[PASS] Checkout page loaded")
 
-    # Confirm purchase
+    # 4️⃣ Confirm purchase
     confirm_btn = wait.until(
         EC.element_to_be_clickable((By.CLASS_NAME, "payment-button"))
     )
@@ -144,19 +102,14 @@ def checkout_and_confirm(driver, wait):
     print("[INFO] Purchase alert:", alert.text)
     alert.accept()
 
-    # Verify redirect
+    # 5️⃣ Verify redirect
     wait.until(EC.url_contains("/profile"))
     print("[PASS] Purchase completed successfully")
 
 
-# ============================
-# MAIN EXECUTION
-# ============================
-
 if __name__ == "__main__":
-
     driver = setup_driver()
-    wait = WebDriverWait(driver, TIMEOUT)
+    wait = WebDriverWait(driver, 30)
 
     try:
         login(driver, wait)
