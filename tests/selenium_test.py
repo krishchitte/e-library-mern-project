@@ -1,6 +1,5 @@
 import time
 import sys
-import os
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -11,49 +10,21 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-# =====================================================
+# ============================
 # CONFIGURATION
-# =====================================================
+# ============================
 
 BASE_URL = "http://localhost:3000"
 EMAIL = "demo123@gmail.com"
 PASSWORD = "demo123"
-
-SCREENSHOT_DIR = os.path.join(
-    os.path.dirname(__file__),
-    "screenshots"
-)
-
-TIMEOUT = 25
+TIMEOUT = 30
 
 
-# =====================================================
-# SCREENSHOT HANDLER
-# =====================================================
-
-if not os.path.exists(SCREENSHOT_DIR):
-    os.makedirs(SCREENSHOT_DIR)
-
-
-def take_screenshot(driver, name):
-    """
-    Saves a screenshot with a standardized name
-    for Jenkins artifacts.
-    """
-    path = os.path.join(SCREENSHOT_DIR, f"{name}.png")
-    driver.save_screenshot(path)
-    print(f"[INFO] Screenshot captured: {path}")
-
-
-# =====================================================
+# ============================
 # DRIVER SETUP
-# =====================================================
+# ============================
 
 def setup_driver():
-    """
-    Sets up Chrome for Headless execution
-    (required for Jenkins/Docker).
-    """
     options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
@@ -66,17 +37,14 @@ def setup_driver():
     return driver
 
 
-# =====================================================
+# ============================
 # LOGIN TEST
-# =====================================================
+# ============================
 
 def login(driver, wait):
-    print("[TEST] Starting Login Phase...")
+    print(f"[TEST] Logging in as {EMAIL}")
 
     driver.get(f"{BASE_URL}/login")
-
-    # Screenshot 01 - Login Page
-    take_screenshot(driver, "01_login_page_loaded")
 
     wait.until(
         EC.presence_of_element_located((By.NAME, "email"))
@@ -92,32 +60,28 @@ def login(driver, wait):
     )
     driver.execute_script("arguments[0].click();", login_btn)
 
-    # Screenshot 02 - Login Alert
     alert = wait.until(EC.alert_is_present())
-    take_screenshot(driver, "02_login_alert_popup")
+    print("[INFO] Login alert:", alert.text)
     alert.accept()
 
-    # Verify JWT Token
+    # Verify token
     wait.until(
         lambda d: d.execute_script(
             "return localStorage.getItem('token');"
         )
     )
 
-    print("[PASS] User authenticated successfully.")
+    print("[PASS] Login successful, token detected")
 
 
-# =====================================================
+# ============================
 # ADD TO CART TEST
-# =====================================================
+# ============================
 
 def add_to_cart(driver, wait):
-    print("[TEST] Starting Shop Phase...")
+    print("[TEST] Adding book to cart")
 
     driver.get(BASE_URL)
-
-    # Screenshot 03 - Homepage Items
-    take_screenshot(driver, "03_homepage_items_list")
 
     book_card = wait.until(
         EC.presence_of_element_located(
@@ -138,17 +102,17 @@ def add_to_cart(driver, wait):
 
     driver.execute_script("arguments[0].click();", add_btn)
 
-    print("[PASS] Item added to cart.")
+    print("[PASS] Book added to cart")
 
 
-# =====================================================
+# ============================
 # CHECKOUT TEST
-# =====================================================
+# ============================
 
 def checkout_and_confirm(driver, wait):
-    print("[TEST] Starting Checkout Phase...")
+    print("[TEST] Checkout flow")
 
-    # Open Cart
+    # Open cart
     cart_btn = wait.until(
         EC.element_to_be_clickable(
             (By.XPATH, "//button[contains(@class,'cart')]")
@@ -156,45 +120,38 @@ def checkout_and_confirm(driver, wait):
     )
     driver.execute_script("arguments[0].click();", cart_btn)
 
-    # Screenshot 04 - Cart Modal
-    take_screenshot(driver, "04_cart_modal_view")
-
-    # Proceed to Checkout
+    # Proceed to checkout
     checkout_btn = wait.until(
         EC.element_to_be_clickable((By.CLASS_NAME, "checkout-btn"))
     )
     driver.execute_script("arguments[0].click();", checkout_btn)
 
+    # Verify checkout page
     wait.until(
         EC.presence_of_element_located(
             (By.XPATH, "//h2[contains(text(),'Confirm Your Order')]")
         )
     )
+    print("[PASS] Checkout page loaded")
 
-    # Screenshot 05 - Confirmation Page
-    take_screenshot(driver, "05_order_confirmation_page")
-
-    # Confirm Purchase
+    # Confirm purchase
     confirm_btn = wait.until(
         EC.element_to_be_clickable((By.CLASS_NAME, "payment-button"))
     )
     driver.execute_script("arguments[0].click();", confirm_btn)
 
     alert = wait.until(EC.alert_is_present())
+    print("[INFO] Purchase alert:", alert.text)
     alert.accept()
 
-    # Verify Redirect
+    # Verify redirect
     wait.until(EC.url_contains("/profile"))
-
-    # Screenshot 06 - Profile Page
-    take_screenshot(driver, "06_final_profile_redirect")
-
-    print("[PASS] Transaction completed.")
+    print("[PASS] Purchase completed successfully")
 
 
-# =====================================================
+# ============================
 # MAIN EXECUTION
-# =====================================================
+# ============================
 
 if __name__ == "__main__":
 
@@ -206,12 +163,12 @@ if __name__ == "__main__":
         add_to_cart(driver, wait)
         checkout_and_confirm(driver, wait)
 
-        print("\n[SUCCESS] All steps passed in CI/CD simulation.")
+        print("\n[SUCCESS] All Selenium tests passed")
         sys.exit(0)
 
     except Exception as e:
-        take_screenshot(driver, "DEBUG_FAIL_LOG")
-        print(f"\n[ERROR] Test Interrupted: {e}")
+        driver.save_screenshot("tests/screenshots/test_failed.png")
+        print(f"\n[ERROR] {e}")
         sys.exit(1)
 
     finally:
