@@ -56,7 +56,7 @@ pipeline {
         stage('Run Selenium Tests') {
             steps {
                 echo 'Running Python Selenium Tests...'
-                bat '"C:\\Users\\Krish Chitte\\AppData\\Local\\Programs\\Python\\Python313\\python.exe" tests/selenium_test.py'
+                bat '"C:\\Users\\Krish Chitte\\AppData\\Local\\Programs\\Python\\Python313\\python.exe" -u tests/selenium_test.py'
             }
         }
     }
