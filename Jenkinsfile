@@ -53,7 +53,7 @@ pipeline {
             }
         }
 
-        stage('Automated Testing') {
+        stage('Run Selenium Tests') {
             steps {
                 echo 'Running Python Selenium Tests...'
                 bat '"C:\\Users\\Krish Chitte\\AppData\\Local\\Programs\\Python\\Python313\\python.exe" tests/selenium_test.py'
@@ -66,6 +66,7 @@ pipeline {
             echo 'Cleaning up Docker containers and volumes...'
             bat 'docker-compose down -v || exit 0'
             bat 'docker container prune -f || exit 0'
+            archiveArtifacts artifacts: 'tests/screenshots/*.png', fingerprint: true
         }
 
         success {
