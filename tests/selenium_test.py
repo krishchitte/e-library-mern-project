@@ -110,3 +110,26 @@ def checkout_and_confirm(driver, wait):
 if __name__ == "__main__":
     driver = setup_driver()
     wait = WebDriverWait(driver, 30)
+
+    try:
+        # Force an immediate start message
+        sys.stdout.write("[INFO] Starting test suite...\n")
+        sys.stdout.flush()
+        
+        login(driver, wait)
+        add_to_cart(driver, wait)
+        checkout_and_confirm(driver, wait)
+        
+        sys.stdout.write("\n[SUCCESS] All Selenium tests passed.\n")
+        sys.stdout.flush()
+        time.sleep(2) # Give Jenkins 2 seconds to "catch" the output
+        sys.exit(0)
+        
+    except Exception as e:
+        sys.stderr.write(f"\n[ERROR] Test failed: {e}\n")
+        sys.stderr.flush()
+        time.sleep(2)
+        sys.exit(1)
+        
+    finally:
+        driver.quit()
