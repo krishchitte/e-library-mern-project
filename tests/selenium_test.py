@@ -8,6 +8,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 
+print = functools.partial(print, flush=True)
+
 BASE_URL = "http://localhost:3000"
 EMAIL = "demo123@gmail.com"
 PASSWORD = "demo123"
