@@ -66,7 +66,6 @@ pipeline {
             echo 'Cleaning up Docker containers and volumes...'
             bat 'docker-compose down -v || exit 0'
             bat 'docker container prune -f || exit 0'
-            archiveArtifacts artifacts: 'tests/screenshots/*.png', fingerprint: true
         }
 
         success {
